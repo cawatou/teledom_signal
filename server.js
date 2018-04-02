@@ -1,11 +1,19 @@
-var static = require('node-static');
-var http = require('http');
-var file = new(static.Server)();
-var app = http.createServer(function (req, res) {
-	file.serve(req, res);
-}).listen(1234);
+const HTTPS_PORT = 1212;
 
-var io = require('socket.io').listen(app);
+const express = require('express');
+const app = express();
+const fs = require('fs');
+const server = require('https').createServer({
+	key: fs.readFileSync('key.pem'),
+	cert: fs.readFileSync('cert.pem')
+},app);
+
+server.listen(HTTPS_PORT, '0.0.0.0', function() {
+	console.log('listening on https://localhost:'+HTTPS_PORT);
+});
+
+
+var io = require('socket.io').listen(server);
 
 io.sockets.on('connection', function (socket) {
 	function log() {
@@ -30,13 +38,13 @@ io.sockets.on('connection', function (socket) {
 		if(numClients == 0) {
 			socket.join(room);
 			socket.emit('created', room);
-		} 
+		}
 
 		else if(numClients == 1) {
 			io.sockets.in(room).emit('join', room);
 			socket.join(room);
 			socket.emit('joined', room);
-		} 
+		}
 
 		else { // max two clients
 			socket.emit('full', room);
@@ -46,3 +54,5 @@ io.sockets.on('connection', function (socket) {
 		socket.broadcast.emit('broadcast(): client ' + socket.id + ' joined room ' + room);
 	});
 });
+
+app.use(express.static('client/'));
