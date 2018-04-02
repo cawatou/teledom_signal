@@ -1,58 +1,38 @@
-const HTTPS_PORT = 1212;
+var app = require('express')();
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
 
-const express = require('express');
-const app = express();
-const fs = require('fs');
-const server = require('https').createServer({
-	key: fs.readFileSync('key.pem'),
-	cert: fs.readFileSync('cert.pem')
-},app);
-
-server.listen(HTTPS_PORT, '0.0.0.0', function() {
-	console.log('listening on https://localhost:'+HTTPS_PORT);
+app.get('/', function (req, res) {
+    res.sendFile(__dirname + '/client/index.html');
 });
 
+var users = {};
 
-var io = require('socket.io').listen(server);
+io.on('connection', function (socket) {
+    socket.on('chat message', function (msg) {
+        console.log(msg);
+        io.emit('chat message', msg);
+    });
 
-io.sockets.on('connection', function (socket) {
-	function log() {
-		var array = [">>> "];
-		for(var i = 0; i < arguments.length; i++) {
-			array.push(arguments[i]);
-		}
-		socket.emit('log', array);
-	}
+    // Желание нового пользователя присоединиться к комнате
+    socket.on("room", function(message) {
+        var json = JSON.parse(message);
+        // Добавляем сокет в список пользователей
+        users[json.id] = socket;
+        if (socket.room !== undefined) {
+            // Если сокет уже находится в какой-то комнате, выходим из нее
+            socket.leave(socket.room);
+        }
+        // Входим в запрошенную комнату
+        socket.room = json.room;
+        socket.join(socket.room);
+        socket.user_id = json.id;
+        // Отправялем остальным клиентам в этой комнате сообщение о присоединении нового участника
+        socket.broadcast.to(socket.room).emit("new", json.id);
+    });
 
-	socket.on('message', function (message) {
-		log('Got message: ', message);
-		socket.broadcast.emit('message', message); // should be room only
-	});
-
-	socket.on('create or join', function (room) {
-		var numClients = io.sockets.clients(room).length;
-
-		log('Room ' + room + ' has ' + numClients + ' client(s)');
-		log('Request to create or join room', room);
-
-		if(numClients == 0) {
-			socket.join(room);
-			socket.emit('created', room);
-		}
-
-		else if(numClients == 1) {
-			io.sockets.in(room).emit('join', room);
-			socket.join(room);
-			socket.emit('joined', room);
-		}
-
-		else { // max two clients
-			socket.emit('full', room);
-		}
-
-		socket.emit('emit(): client ' + socket.id + ' joined room ' + room);
-		socket.broadcast.emit('broadcast(): client ' + socket.id + ' joined room ' + room);
-	});
 });
 
-app.use(express.static('client/'));
+http.listen(3000, function () {
+    console.log('listening on *:3000');
+});
