@@ -45,6 +45,41 @@ var newPeer = () => {
 
 var pc = null;
 
+function send() {
+	pc = newPeer();
+	pc.addStream(l);
+	/*var pc = new RTCPeerConnection(peerConnectionConfig);
+	pc.onDataChannel = handle_new;
+	pc.ontrack = e => r.srcObject = e.streams[0];
+	pc.oniceconnectionstatechange = e => log(pc.iceConnectionState);
+	pc.onicecandidate = e => sc.emit("candidate", { ice: e.candidate, uuid: u });
+	
+	var dataChannel = pc.createDataChannel("skipodev",{ reliable: true });
+	
+	console.log('dataChannel', dataChannel);
+	handle_new(dataChannel);*/
+}
+
+function handle_new(channel) {
+	channel.onmessage = function(evt) {
+		if (evt.data instanceof Blob) {
+			console.log("I received a blob");
+			// assign data to an image, save in a file, etc
+		} else {
+			console.log("I got a message: " + evt.data);
+		}
+	};
+
+	channel.onopen = function() {
+		// We can now send, like WebSockets
+		channel.send("The channel is open!");
+		console.log('The channel is open!');
+	};
+
+	channel.onclose = function() {
+		console.log("pc1 onclose fired");
+	};
+};
 
 function start(e) {
 	if ( b.value.indexOf("Start Call") != -1 ) {
@@ -112,3 +147,4 @@ function createUUID() {
 
 
 var log = msg => console.log(msg);//div.innerHTML += "<br>" + msg;
+

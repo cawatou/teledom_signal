@@ -20,14 +20,14 @@ io.on('connection', function (client) {
 
     client.on('offer', function (details) {
         client.broadcast.emit('offer', details);
-        //console.log('offer: ' + JSON.stringify(details));
-        console.log('offer');
+        console.log('offer: ' + JSON.stringify(details));
+        //console.log('offer');
     });
 
     client.on('answer', function (details) {
         client.broadcast.emit('answer', details);
-        //console.log('answer: ' + JSON.stringify(details));
-        console.log('answer');
+        console.log('answer: ' + JSON.stringify(details));
+        //console.log('answer');
     });
 
     client.on('candidate', function (details) {
