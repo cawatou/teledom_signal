@@ -3,10 +3,13 @@ const HTTPS_PORT = 8011;
 const express = require('express');
 const app = express();
 const fs = require('fs');
+//const server = require('http').createServer(app);
 const server = require('https').createServer({
     key: fs.readFileSync('key.pem'),
     cert: fs.readFileSync('cert.pem')
 }, app);
+
+
 
 var io = require('socket.io')(server);
 
@@ -20,19 +23,19 @@ io.on('connection', function (client) {
 
     client.on('offer', function (details) {
         client.broadcast.emit('offer', details);
-        console.log('offer: ' + JSON.stringify(details));
+        console.log('offer, ' + details.uuid + ': ' + JSON.stringify(details));
         //console.log('offer');
     });
 
     client.on('answer', function (details) {
         client.broadcast.emit('answer', details);
-        console.log('answer: ' + JSON.stringify(details));
+        console.log('answer, ' + details.uuid + ': '  + JSON.stringify(details));
         //console.log('answer');
     });
 
     client.on('candidate', function (details) {
         client.broadcast.emit('candidate', details);
-        console.log('candidate: ' + JSON.stringify(details));
+        console.log('candidate, ' + details.uuid + ': ' + JSON.stringify(details));
     });
 
     client.on('hangup', function (details) {
