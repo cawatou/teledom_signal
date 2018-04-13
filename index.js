@@ -58,6 +58,7 @@ function setChannelEvents() {
 		console.log('Channel error:', err);
 	};
 	channel.onmessage = function(e) {
+		console.log(e);
 		console.log('Incoming message:', e.data);
 	};
 	console.log('setChannelEvents', channel);
